@@ -4,26 +4,20 @@ Documentation=https://github.com/SiliconCentric/Sequoia-Client
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=60
-StartLimitBurst=5
-
-[Service]
+StartLimitBurst=5 [Service]
 Type=simple
 User=sequoia
 Group=sequoia
 WorkingDirectory=/var/lib/sequoia
 # Starts BOTH listeners:
-#   - ClientService (stream path → Server, default port 50051)
-#   - HalService    (SDK/E2E path,          default port 50052)
+# - ClientService (stream path → Server, default port 50051)
+# - HalService (SDK/E2E path, default port 50052)
 ExecStart=/usr/bin/sequoia-client
 Restart=on-failure
-RestartSec=5
-
-# Logging
+RestartSec=5 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=sequoia-client
-
-# Hardening
+SyslogIdentifier=sequoia-client # Hardening
 NoNewPrivileges=yes
 ProtectSystem=full
 PrivateTmp=yes
@@ -31,7 +25,5 @@ ReadWritePaths=/var/lib/sequoia
 ProtectHome=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
-ProtectControlGroups=yes
-
-[Install]
+ProtectControlGroups=yes [Install]
 WantedBy=multi-user.target
