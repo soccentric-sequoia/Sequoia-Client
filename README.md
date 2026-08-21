@@ -2,26 +2,42 @@
 
 ## Project Summary
 
-Sequoia-Client is the C++17 embedded daemon that executes Sequoia hardware validation work and connects a target board to Sequoia-Server. The repository contains the application wiring, configuration, stream, spool, run, registry, HAL bridge, logging, diagnostics, and service-installation surfaces described by its CMake and Make build files. The client loads a TOML configuration, starts the application, and uses the sibling Sequoia-HAL contracts and libraries to invoke module adapters. Results are converted to protobuf messages, sequenced and timestamped, then sent over the server-facing gRPC stream. A SQLite spool provides durable buffering when the network is unavailable; the documented janitor and log-collection paths cover retention and forwarding concerns. The inbound HalService endpoint is the integration point used by the Python SDK and end-to-end tooling. The repository also includes ARM64 Docker/cross-build helpers, a sample configuration, systemd assets, and Doxygen setup.
+Sequoia-Client is the C++17 embedded daemon that executes Sequoia hardware validation work and
+connects a target board to Sequoia-Server. The repository contains the application wiring,
+configuration, stream, spool, run, registry, HAL bridge, logging, diagnostics, and
+service-installation surfaces described by its CMake and Make build files. The client loads a TOML
+configuration, starts the application, and uses the sibling Sequoia-HAL contracts and libraries to
+invoke module adapters. Results are converted to protobuf messages, sequenced and timestamped, then
+sent over the server-facing gRPC stream. A SQLite spool provides durable buffering when the network
+is unavailable; the documented janitor and log-collection paths cover retention and forwarding
+concerns. The inbound HalService endpoint is the integration point used by the Python SDK and
+end-to-end tooling. The repository also includes ARM64 Docker/cross-build helpers, a sample
+configuration, systemd assets, and Doxygen setup.
 
-The existing documentation identifies 35 active hardware-module adapters and additional phase-three modules. That inventory is useful but should be read alongside the source and tests: adapter availability is not equivalent to successful hardware execution on this host. The checked-in unit-test surface explicitly covers result serialization and run orchestration; broader behavior depends on the HAL sibling and target hardware. Native build and CTest commands are documented below. Manual deployment, gRPC interoperability, TLS, spool recovery, and physical peripherals remain review activities and are intentionally not marked as verified here.
+The existing documentation identifies 35 active hardware-module adapters and additional phase-three
+modules. That inventory is useful but should be read alongside the source and tests: adapter
+availability is not equivalent to successful hardware execution on this host. The checked-in
+unit-test surface explicitly covers result serialization and run orchestration; broader behavior
+depends on the HAL sibling and target hardware. Native build and CTest commands are documented
+below. Manual deployment, gRPC interoperability, TLS, spool recovery, and physical peripherals
+remain review activities and are intentionally not marked as verified here.
 
 ## Feature Inventory
 
 | # | Name / Description | Implemented? | Test Coverage? | Manual Test |
-|---:|---|---|---|---|
-| 1 | C++17 daemon entry point and application wiring | Implemented | Unit/build coverage present | [ ] Manual verification required |
-| 2 | TOML client configuration and sample deployment config | Implemented | Partial; configuration paths are exercised indirectly | [ ] Manual verification required |
-| 3 | Module registry and adapter dispatch for hardware tests | Implemented | Partial; registry behavior documented, target execution not proven here | [ ] Manual verification required |
-| 4 | HAL result to protobuf serialization | Implemented | Covered by `tests/test_result_serializer.cc` | [ ] Manual verification required |
-| 5 | Run orchestration, sequencing, timestamps, and batching | Implemented | Covered by `tests/test_run_orchestrator.cc` | [ ] Manual verification required |
-| 6 | SQLite durable result spool and replay path | Implemented | Unknown from the checked-in focused tests | [ ] Manual verification required |
-| 7 | Bidirectional gRPC stream to Sequoia-Server | Implemented | Unknown; requires integration endpoint | [ ] Manual verification required |
-| 8 | HalService gRPC endpoint for SDK callers | Implemented | Unknown; requires client/server integration | [ ] Manual verification required |
-| 9 | Log collection, janitor cleanup, and diagnostic socket surfaces | Implemented | Unknown from focused tests | [ ] Manual verification required |
-| 10 | Systemd installation and runtime service assets | Implemented | Not found; packaging/runtime validation required | [ ] Manual verification required |
-| 11 | Docker-based ARM64 cross-build helpers | Implemented | Not found; requires Docker/QEMU and target image | [ ] Manual verification required |
-| 12 | Phase-three module adapters listed in existing docs | Planned | No tests found for planned modules | [ ] Manual verification required |
+| --- | --- | --- | --- | --- |
+|   1 | C++17 daemon entry point and application wiring                 | Implemented  | Unit/build coverage present                                             | [ ] Manual verification required |
+|   2 | TOML client configuration and sample deployment config          | Implemented  | Partial; configuration paths are exercised indirectly                   | [ ] Manual verification required |
+|   3 | Module registry and adapter dispatch for hardware tests         | Implemented  | Partial; registry behavior documented, target execution not proven here | [ ] Manual verification required |
+|   4 | HAL result to protobuf serialization                            | Implemented  | Covered by `tests/test_result_serializer.cc`                            | [ ] Manual verification required |
+|   5 | Run orchestration, sequencing, timestamps, and batching         | Implemented  | Covered by `tests/test_run_orchestrator.cc`                             | [ ] Manual verification required |
+|   6 | SQLite durable result spool and replay path                     | Implemented  | Unknown from the checked-in focused tests                               | [ ] Manual verification required |
+|   7 | Bidirectional gRPC stream to Sequoia-Server                     | Implemented  | Unknown; requires integration endpoint                                  | [ ] Manual verification required |
+|   8 | HalService gRPC endpoint for SDK callers                        | Implemented  | Unknown; requires client/server integration                             | [ ] Manual verification required |
+|   9 | Log collection, janitor cleanup, and diagnostic socket surfaces | Implemented  | Unknown from focused tests                                              | [ ] Manual verification required |
+|  10 | Systemd installation and runtime service assets                 | Implemented  | Not found; packaging/runtime validation required                        | [ ] Manual verification required |
+|  11 | Docker-based ARM64 cross-build helpers                          | Implemented  | Not found; requires Docker/QEMU and target image                        | [ ] Manual verification required |
+|  12 | Phase-three module adapters listed in existing docs             | Planned      | No tests found for planned modules                                      | [ ] Manual verification required |
 
 ## Build and Test
 
@@ -31,15 +47,16 @@ make build
 cd build/native && ctest --output-on-failure
 ```
 
-The focused tests are `tests/test_result_serializer.cc` and
-`tests/test_run_orchestrator.cc`; inspect `tests/CMakeLists.txt` for the exact
-registered targets. `make lint` and the Docker targets are available for static
-analysis and cross-build validation. Hardware behavior, server connectivity,
-and deployment must be tested on an appropriately provisioned target.
+The focused tests are `tests/test_result_serializer.cc` and `tests/test_run_orchestrator.cc`;
+inspect `tests/CMakeLists.txt` for the exact registered targets. `make lint` and the Docker targets
+are available for static analysis and cross-build validation. Hardware behavior, server
+connectivity, and deployment must be tested on an appropriately provisioned target.
+
 - [Architecture](#architecture)
 - [System Requirements](#system-requirements)
 - [Dependencies](#dependencies)
-- [Building](#building) - [Native Build](#native-build) - [Docker Build (Cross-compilation)](#docker-build-cross-compilation)
+- [Building](#building) - [Native Build](#native-build) -
+  [Docker Build (Cross-compilation)](#docker-build-cross-compilation)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Running](#running) - [Manual Execution](#manual-execution) - [Systemd Service](#systemd-service)
@@ -48,34 +65,36 @@ and deployment must be tested on an appropriately provisioned target.
 - [Supported Hardware Modules](#supported-hardware-modules)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
-- [License](#license) --- ## Overview Sequoia-Client provides: - **Test Orchestration**: Executes hardware validation tests via 35+ module adapters (CPU, GPU, Thermal, Storage, USB, Ethernet, etc.)
-- **Result Serialization**: Converts HAL test results to Protocol Buffer format with proper sequencing and timestamping
+- [License](#license)
+
+## Overview Sequoia-Client provides: - **Test Orchestration**: Executes
+
+hardware validation tests via 35+ module adapters (CPU, GPU, Thermal, Storage, USB, Ethernet, etc.)
+
+- **Result Serialization**: Converts HAL test results to Protocol Buffer format with proper
+  sequencing and timestamping
 - **Durable Storage**: SQLite-based spool for result buffering and replay on network interruption
 - **Server Streaming**: Bidirectional gRPC stream to Sequoia-Server for commands and result delivery
 - **SDK Interface**: HalService gRPC endpoint for Python SDK and end-to-end test integration
 - **Log Collection**: Tails specified log files and forwards entries to server
-- **Diagnostic Socket**: Local diagnostic interface for health monitoring **Target Platforms**: Intel x86 RT 5 (Intel x86 RT 5), Intel x86 RT 5, or any ARM64/x86_64 Linux system with GPIO/hardware access. --- ## Architecture ```
-┌─────────────────────────────────────────────────────────────┐
-│ Sequoia-Client │
-│ │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
-│ │ StreamClient │──│ Spool │──│RunOrchestrator│ │
-│ │ (gRPC to │ │ (SQLite3) │ │ (Test Exec) │ │
-│ │ Server) │ └──────────────┘ └───────┬───────┘ │
-│ └──────────────┘ │ │
-│ │ │
-│ ┌──────────────┐ ┌──────────────┐ ┌───────▼───────┐ │
-│ │ LogCollector │ │ DiagSocket │ │ Module │ │
-│ │ │ │ │ │ Registry │ │
-│ └──────────────┘ └──────────────┘ └───────┬───────┘ │
-│ │ │
-│ ┌──────────────┐ ┌───────▼───────┐ │
-│ │ HalService │◄───────────────────│ 35+ Adapters │ │
-│ │ (gRPC for │ │ (HAL Bridge) │ │
-│ │ PySDK) │ └───────────────┘ │
-│ └──────────────┘ │
-└─────────────────────────────────────────────────────────────┘ ▲ │ │ │ │ ▼ Sequoia-Server Sequoia-HAL (gRPC Stream) (Hardware Abstraction)
-``` ### Core Components | Component | Purpose |
+- **Diagnostic Socket**: Local diagnostic interface for health monitoring **Target Platforms**:
+  Intel x86 RT 5 (Intel x86 RT 5), Intel x86 RT 5, or any ARM64/x86_64 Linux system with
+  GPIO/hardware access.
+
+## Architecture ```
+
+┌─────────────────────────────────────────────────────────────┐ │ Sequoia-Client │ │ │ │
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ │ │ StreamClient │──│ Spool
+│──│RunOrchestrator│ │ │ │ (gRPC to │ │ (SQLite3) │ │ (Test Exec) │ │ │ │ Server) │ └──────────────┘
+└───────┬───────┘ │ │ └──────────────┘ │ │ │ │ │ │ ┌──────────────┐ ┌──────────────┐
+┌───────▼───────┐ │ │ │ LogCollector │ │ DiagSocket │ │ Module │ │ │ │ │ │ │ │ Registry │ │ │
+└──────────────┘ └──────────────┘ └───────┬───────┘ │ │ │ │ │ ┌──────────────┐ ┌───────▼───────┐ │ │
+│ HalService │◄───────────────────│ 35+ Adapters │ │ │ │ (gRPC for │ │ (HAL Bridge) │ │ │ │ PySDK) │
+└───────────────┘ │ │ └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘ ▲ │ │ │ │ ▼ Sequoia-Server
+Sequoia-HAL (gRPC Stream) (Hardware Abstraction)
+
+````### Core Components | Component | Purpose |
 |-----------|---------|
 | **StreamClient** | Bidirectional gRPC stream to Sequoia-Server; handles reconnection and heartbeat |
 | **Spool** | SQLite3 database for durable result/log storage; enforces capacity limits |
@@ -84,14 +103,18 @@ and deployment must be tested on an appropriately provisioned target.
 | **HalService** | gRPC service (port 50052) for Python SDK to invoke HAL tests |
 | **LogCollector** | Tails configured log files and forwards to server |
 | **Janitor** | Periodic cleanup of old spool entries |
-| **DiagSocket** | Unix socket for local diagnostics | --- ## System Requirements ### Hardware
+| **DiagSocket** | Unix socket for local diagnostics |
+
+## System Requirements ### Hardware
 - **Minimum**: ARM64 or x86_64 processor (Intel x86 RT 5, Intel x86 RT 5, or similar)
 - **Recommended**: 1 GB RAM, 2 GB storage for spool database ### Operating System
 - **Ubuntu 22.04 LTS** (primary target)
 - **Ubuntu 20.04 LTS** (supported with manual dependency builds)
 - Other Debian-based ARM64/x86_64 distributions (untested) ### Network
 - Connectivity to **Sequoia-Server** (configurable IP/port)
-- Optional: Access to hardware peripherals (GPIO, I2C, SPI, USB, etc.) --- ## Dependencies ### Build-time Dependencies | Library | Version | Purpose |
+- Optional: Access to hardware peripherals (GPIO, I2C, SPI, USB, etc.)
+
+## Dependencies ### Build-time Dependencies | Library | Version | Purpose |
 |---------|---------|---------|
 | **CMake** | ≥ 3.16 | Build system |
 | **GCC/G++** | ≥ 9.0 (C++17) | Compiler |
@@ -105,7 +128,11 @@ and deployment must be tested on an appropriately provisioned target.
 |------------|-------|
 | **Sequoia-HAL** | Sibling repository (must be in `../Sequoia-HAL/`) |
 | **libprotobuf.so** | Shared library for Protocol Buffers |
-| **libgrpc++.so** | gRPC C++ runtime | --- ## Building ### Prerequisites 1. **Clone both repositories** (they must be siblings): ```bash mkdir -p ~/workspace/Sequoia cd ~/workspace/Sequoia git clone <sequoia-client-repo-url> Sequoia-Client git clone <sequoia-hal-repo-url> Sequoia-HAL ``` 2. **Install system dependencies**: **Ubuntu 22.04/ 20.04:** ```bash sudo apt-get update sudo apt-get install -y \ build-essential cmake git \ protobuf-compiler libprotobuf-dev \ libgrpc++-dev libgrpc-dev \ libsqlite3-dev libspdlog-dev \ libgtest-dev pkg-config ninja-build ``` 3. **Install header-only libraries** (if not packaged): **toml++** (required on Ubuntu 22.04 ARM64): ```bash git clone --depth=1 --branch v3.4.0 https://github.com/marzer/tomlplusplus.git/tmp/tomlplusplus cmake -S/tmp/tomlplusplus -B/tmp/tomlplusplus/build \ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib sudo cmake --install/tmp/tomlplusplus/build rm -rf/tmp/tomlplusplus ``` **yaml-cpp 0.8.0** (if system version lacks CMake targets): ```bash git clone --depth=1 --branch 0.8.0 https://github.com/jbeder/yaml-cpp.git/tmp/yaml-cpp cmake -S/tmp/yaml-cpp -B/tmp/yaml-cpp/build \ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DYAML_CPP_BUILD_TESTS=OFF cmake --build/tmp/yaml-cpp/build --parallel sudo cmake --install/tmp/yaml-cpp/build rm -rf/tmp/yaml-cpp ``` 4. **Build grpc_cpp_plugin** (if missing): ```bash # Check if grpc_cpp_plugin exists which grpc_cpp_plugin || { # Build from source (see Dockerfile for full build script) # Alternatively, install grpc-plugins package if available sudo apt-get install -y protobuf-compiler-grpc } ``` --- ### Native Build **Using Makefile** (recommended):
+| **libgrpc++.so** | gRPC C++ runtime |
+
+## Building ### Prerequisites 1. **Clone both repositories** (they must be siblings): ```bash mkdir -p ~/workspace/Sequoia cd ~/workspace/Sequoia git clone <sequoia-client-repo-url> Sequoia-Client git clone <sequoia-hal-repo-url> Sequoia-HAL ``` 2. **Install system dependencies**: **Ubuntu 22.04/ 20.04:** ```bash sudo apt-get update sudo apt-get install -y \ build-essential cmake git \ protobuf-compiler libprotobuf-dev \ libgrpc++-dev libgrpc-dev \ libsqlite3-dev libspdlog-dev \ libgtest-dev pkg-config ninja-build ``` 3. **Install header-only libraries** (if not packaged): **toml++** (required on Ubuntu 22.04 ARM64): ```bash git clone --depth=1 --branch v3.4.0 https://github.com/marzer/tomlplusplus.git/tmp/tomlplusplus cmake -S/tmp/tomlplusplus -B/tmp/tomlplusplus/build \ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib sudo cmake --install/tmp/tomlplusplus/build rm -rf/tmp/tomlplusplus ``` **yaml-cpp 0.8.0** (if system version lacks CMake targets): ```bash git clone --depth=1 --branch 0.8.0 https://github.com/jbeder/yaml-cpp.git/tmp/yaml-cpp cmake -S/tmp/yaml-cpp -B/tmp/yaml-cpp/build \ -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DYAML_CPP_BUILD_TESTS=OFF cmake --build/tmp/yaml-cpp/build --parallel sudo cmake --install/tmp/yaml-cpp/build rm -rf/tmp/yaml-cpp ``` 4. **Build grpc_cpp_plugin** (if missing): ```bash # Check if grpc_cpp_plugin exists which grpc_cpp_plugin || { # Build from source (see Dockerfile for full build script) # Alternatively, install grpc-plugins package if available sudo apt-get install -y protobuf-compiler-grpc } ```
+
+### Native Build **Using Makefile** (recommended):
 ```bash
 cd ~/workspace/Sequoia/Sequoia-Client
 make configure # Run CMake
@@ -119,14 +146,22 @@ cmake ../.. -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel $(nproc)
 ``` **Output**:
 - Binary: `build/native/bin/sequoia-client`
-- Tests: `build/native/bin/test_result_serializer`, `build/native/bin/test_run_orchestrator` --- ### Docker Build (Cross-compilation) For cross-compiling from x86_64 to ARM64 (Intel x86 RT 5): 1. **Build Docker image**: ```bash cd ~/workspace/Sequoia/Sequoia-Client/docker make build # or: docker buildx build --platform linux/arm64 --load -t sequoia . ``` 2. **Enter build container**: ```bash make run # Interactive shell in ARM64 container ``` 3. **Build inside container**: ```bash # Inside container: cd/workspace/Sequoia-Client make docker-configure make docker-build ``` 4. **Extract binaries**: ```bash # On host: cd ~/workspace/Sequoia/Sequoia-Client docker run --rm -v $(pwd):/host sequoia \ cp -r/workspace/Sequoia-Client/build/cross/bin/host/build/cross/ ``` --- ## Installation ### Manual Installation 1. **Copy binary**: ```bash sudo install -m 0755 build/native/bin/sequoia-client/usr/bin/sequoia-client ``` 2. **Create configuration directory**: ```bash sudo mkdir -p/etc/sequoia sudo cp conf/client.conf.sample/etc/sequoia/client.conf sudo chown root:root/etc/sequoia/client.conf sudo chmod 0644/etc/sequoia/client.conf ``` 3. **Create spool directory**: ```bash sudo mkdir -p/var/lib/sequoia/spool sudo chown sequoia:sequoia/var/lib/sequoia/spool # See user setup below ``` 4. **Create sequoia user** (for systemd service): ```bash sudo useradd -r -s/usr/sbin/nologin -d/var/lib/sequoia sequoia sudo chown -R sequoia:sequoia/var/lib/sequoia ``` 5. **Install systemd service**: ```bash sudo cp systemd/sequoia-client.service/etc/systemd/system/ sudo systemctl daemon-reload ``` --- ### CMake Install Alternatively, use the CMake install target:
+- Tests: `build/native/bin/test_result_serializer`, `build/native/bin/test_run_orchestrator`
+
+### Docker Build (Cross-compilation) For cross-compiling from x86_64 to ARM64 (Intel x86 RT 5): 1. **Build Docker image**: ```bash cd ~/workspace/Sequoia/Sequoia-Client/docker make build # or: docker buildx build --platform linux/arm64 --load -t sequoia . ``` 2. **Enter build container**: ```bash make run # Interactive shell in ARM64 container ``` 3. **Build inside container**: ```bash # Inside container: cd/workspace/Sequoia-Client make docker-configure make docker-build ``` 4. **Extract binaries**: ```bash # On host: cd ~/workspace/Sequoia/Sequoia-Client docker run --rm -v $(pwd):/host sequoia \ cp -r/workspace/Sequoia-Client/build/cross/bin/host/build/cross/ ```
+
+## Installation ### Manual Installation 1. **Copy binary**: ```bash sudo install -m 0755 build/native/bin/sequoia-client/usr/bin/sequoia-client ``` 2. **Create configuration directory**: ```bash sudo mkdir -p/etc/sequoia sudo cp conf/client.conf.sample/etc/sequoia/client.conf sudo chown root:root/etc/sequoia/client.conf sudo chmod 0644/etc/sequoia/client.conf ``` 3. **Create spool directory**: ```bash sudo mkdir -p/var/lib/sequoia/spool sudo chown sequoia:sequoia/var/lib/sequoia/spool # See user setup below ``` 4. **Create sequoia user** (for systemd service): ```bash sudo useradd -r -s/usr/sbin/nologin -d/var/lib/sequoia sequoia sudo chown -R sequoia:sequoia/var/lib/sequoia ``` 5. **Install systemd service**: ```bash sudo cp systemd/sequoia-client.service/etc/systemd/system/ sudo systemctl daemon-reload ```
+
+### CMake Install Alternatively, use the CMake install target:
 ```bash
 cd build/native
 sudo cmake --install .
 ``` This installs:
 - Binary → `/usr/bin/sequoia-client`
 - Config → `/etc/sequoia/client.conf`
-- Service → `/lib/systemd/system/sequoia-client.service` --- ## Configuration Edit `/etc/sequoia/client.conf`: ```toml
+- Service → `/lib/systemd/system/sequoia-client.service`
+
+## Configuration Edit `/etc/sequoia/client.conf`: ```toml
 # Sequoia-Client configuration # ---------------------------------------------------------------------------
 # gRPC server (outbound — connects to Sequoia-Server)
 # ---------------------------------------------------------------------------
@@ -155,7 +190,9 @@ log_spool_cap_bytes = 524288000 # 500 MiB # ------------------------------------
 - `server_address`: IP/hostname of Sequoia-Server instance **Optional**:
 - `hal_service_port`: Change if port 50052 conflicts
 - `tls_*`: Enable TLS for production deployments
-- `log_paths`: Additional log files to tail (e.g., HAL library logs) --- ## Running ### Manual Execution **Development run** (foreground):
+- `log_paths`: Additional log files to tail (e.g., HAL library logs)
+
+## Running ### Manual Execution **Development run** (foreground):
 ```bash/usr/bin/sequoia-client --config/etc/sequoia/client.conf
 ``` **With debug logging**:
 ```bash
@@ -165,7 +202,9 @@ SPDLOG_LEVEL=debug/usr/bin/sequoia-client --config/etc/sequoia/client.conf
 2. Initialize spool database
 3. Connect to Sequoia-Server (retry on failure)
 4. Start HalService listener on port 50052
-5. Begin heartbeat loop **Graceful shutdown**: Send `SIGTERM` or `SIGINT` (Ctrl+C) --- ### Systemd Service **Enable and start**:
+5. Begin heartbeat loop **Graceful shutdown**: Send `SIGTERM` or `SIGINT` (Ctrl+C)
+
+### Systemd Service **Enable and start**:
 ```bash
 sudo systemctl enable sequoia-client.service
 sudo systemctl start sequoia-client.service
@@ -182,7 +221,9 @@ sudo systemctl stop sequoia-client.service
 ``` **Restart after config changes**:
 ```bash
 sudo systemctl restart sequoia-client.service
-``` --- ## Testing ### Run Unit Tests ```bash
+```
+
+## Testing ### Run Unit Tests ```bash
 cd build/native
 ctest --output-on-failure
 ``` Or run individual test binaries:
@@ -195,7 +236,9 @@ ctest --output-on-failure
 | `test_run_orchestrator` | Tests orchestration logic and batching | ### Manual Integration Test 1. **Start Sequoia-Server** (on remote machine or localhost)
 2. **Configure client** to point to server IP
 3. **Run client** with `--config` flag
-4. **Trigger test via SDK**: ```python # Python SDK example from sequoia_sdk import Client client = Client("localhost:50052") result = client.run_test("cpu", "frequency_test") print(result) ``` --- ## Project Structure ```
+4. **Trigger test via SDK**: ```python # Python SDK example from sequoia_sdk import Client client = Client("localhost:50052") result = client.run_test("cpu", "frequency_test") print(result) ```
+
+## Project Structure ```
 Sequoia-Client/
 ├── CMakeLists.txt # Root build configuration
 ├── Makefile # High-level build commands
@@ -230,7 +273,9 @@ Sequoia-Client/
 │ ├── Dockerfile # ARM64 build container
 │ └── Makefile # Docker build helpers
 └── client_update/ # Design documents ├── 01_discovery.md ├── 02_plan.md └── ...
-``` --- ## Supported Hardware Modules Sequoia-Client includes adapters for **35 hardware modules** (with 16 additional modules planned): ### Active Modules (35) | Category | Modules |
+```
+
+## Supported Hardware Modules Sequoia-Client includes adapters for **35 hardware modules** (with 16 additional modules planned): ### Active Modules (35) | Category | Modules |
 |----------|---------|
 | **Compute** | CPU, GPU, Deep Learning Accelerator, Vision Accelerator |
 | **Memory** | System Memory, Storage |
@@ -244,19 +289,31 @@ Sequoia-Client/
 | **System** | Clock and Timing, Software Interface, System Integration |
 | **Safety** | Functional Safety, Reliability, Security Features |
 | **Debug** | Debug and Development Interfaces, MCU Interface |
-| **Specialized** | Serializer/Deserializer, PoE HAT, Sense HAT | ### Phase 3 Modules (16 — Planned) Accelerometer, Analog Input, Battery, Bluetooth, CAN Bus, eMMC, I²C, MIPI CSI, MIPI DSI, NVMe, PWM Output, RS-485, RTC, SD Card, SPI, UART ### Stub Adapter Unrecognized modules fall back to `StubAdapter`, which logs test invocations but returns honest SKIPPED results. --- ## Development ### Coding Standards - **Language**: C++17
+| **Specialized** | Serializer/Deserializer, PoE HAT, Sense HAT | ### Phase 3 Modules (16 — Planned) Accelerometer, Analog Input, Battery, Bluetooth, CAN Bus, eMMC, I²C, MIPI CSI, MIPI DSI, NVMe, PWM Output, RS-485, RTC, SD Card, SPI, UART ### Stub Adapter Unrecognized modules fall back to `StubAdapter`, which logs test invocations but returns honest SKIPPED results.
+
+## Development ### Coding Standards - **Language**: C++17
 - **Style**: Follow existing conventions (see `.clang-format` if present)
 - **Logging**: Use `spdlog` macros (`spdlog::info`, `spdlog::error`, etc.)
-- **Error Handling**: Return `bool` or `Status` from init methods; log errors before returning ### Adding a New Module Adapter 1. **Create adapter files**: ```bash touch src/registry/adapters/my_module_adapter.h touch src/registry/adapters/my_module_adapter.cc ``` 2. **Implement `AdapterBase` interface**: ```cpp// my_module_adapter.h #pragma once #include "registry/AdapterBase.h" class MyModuleAdapter : public AdapterBase { public: std::string module_id const override { return "my_module"; } hal::TestResult run_test(const std::string& test_id, const TestParameters& params) override; }; ``` 3. **Register in `app.cpp`**: ```cpp #include "registry/adapters/my_module_adapter.h"// ... reg->register_adapter(std::make_unique<MyModuleAdapter>); ``` 4. **Build and test**: ```bash make build ./build/native/bin/sequoia-client --config/etc/sequoia/client.conf ``` --- ## Troubleshooting ### Common Issues #### 1. **gRPC connection fails** ``` [ERROR] StreamClient failed to connect to 192.168.1.100:50051 ``` **Solution**: - Verify `server_address` in `/etc/sequoia/client.conf` - Check network connectivity: `ping 192.168.1.100` - Ensure Sequoia-Server is running and reachable - Check firewall rules: `sudo ufw status` #### 2. **Missing `grpc_cpp_plugin`** ``` CMake Error: grpc_cpp_plugin not found ``` **Solution**: ```bash sudo apt-get install -y protobuf-compiler-grpc # OR build from source (see Dockerfile) ``` #### 3. **Spool database locked** ``` [ERROR] Spool::init failed: database is locked ``` **Solution**: - Stop conflicting instance: `sudo systemctl stop sequoia-client` - Check for stale processes: `ps aux | grep sequoia-client` - Remove lock if safe: `rm/var/lib/sequoia/spool/spool.db-shm` #### 4. **Permission denied on `/var/lib/sequoia`** ``` [ERROR] Failed to create spool.db: Permission denied ``` **Solution**: ```bash sudo chown -R sequoia:sequoia/var/lib/sequoia sudo chmod 0755/var/lib/sequoia ``` #### 5. **HAL library not found** ``` CMake Error: Could not find Sequoia-HAL ``` **Solution**: - Ensure `Sequoia-HAL` is in sibling directory: ```bash ls -ld ../Sequoia-HAL # Should exist ``` - Clone HAL repository: `git clone <hal-repo> ../Sequoia-HAL` #### 6. **Port 50052 already in use** ``` [ERROR] HalService failed to bind: Address already in use ``` **Solution**: - Check what's using the port: `sudo lsof -i :50052` - Change `hal_service_port` in config, or kill conflicting process --- ### Debug Logging Enable verbose logging:
+- **Error Handling**: Return `bool` or `Status` from init methods; log errors before returning ### Adding a New Module Adapter 1. **Create adapter files**: ```bash touch src/registry/adapters/my_module_adapter.h touch src/registry/adapters/my_module_adapter.cc ``` 2. **Implement `AdapterBase` interface**: ```cpp// my_module_adapter.h #pragma once #include "registry/AdapterBase.h" class MyModuleAdapter : public AdapterBase { public: std::string module_id const override { return "my_module"; } hal::TestResult run_test(const std::string& test_id, const TestParameters& params) override; }; ``` 3. **Register in `app.cpp`**: ```cpp #include "registry/adapters/my_module_adapter.h"// ... reg->register_adapter(std::make_unique<MyModuleAdapter>); ``` 4. **Build and test**: ```bash make build ./build/native/bin/sequoia-client --config/etc/sequoia/client.conf ```
+
+## Troubleshooting ### Common Issues #### 1. **gRPC connection fails** ``` [ERROR] StreamClient failed to connect to 192.168.1.100:50051 ``` **Solution**: - Verify `server_address` in `/etc/sequoia/client.conf` - Check network connectivity: `ping 192.168.1.100` - Ensure Sequoia-Server is running and reachable - Check firewall rules: `sudo ufw status` #### 2. **Missing `grpc_cpp_plugin`** ``` CMake Error: grpc_cpp_plugin not found ``` **Solution**: ```bash sudo apt-get install -y protobuf-compiler-grpc # OR build from source (see Dockerfile) ``` #### 3. **Spool database locked** ``` [ERROR] Spool::init failed: database is locked ``` **Solution**: - Stop conflicting instance: `sudo systemctl stop sequoia-client` - Check for stale processes: `ps aux | grep sequoia-client` - Remove lock if safe: `rm/var/lib/sequoia/spool/spool.db-shm` #### 4. **Permission denied on `/var/lib/sequoia`** ``` [ERROR] Failed to create spool.db: Permission denied ``` **Solution**: ```bash sudo chown -R sequoia:sequoia/var/lib/sequoia sudo chmod 0755/var/lib/sequoia ``` #### 5. **HAL library not found** ``` CMake Error: Could not find Sequoia-HAL ``` **Solution**: - Ensure `Sequoia-HAL` is in sibling directory: ```bash ls -ld ../Sequoia-HAL # Should exist ``` - Clone HAL repository: `git clone <hal-repo> ../Sequoia-HAL` #### 6. **Port 50052 already in use** ``` [ERROR] HalService failed to bind: Address already in use ``` **Solution**: - Check what's using the port: `sudo lsof -i :50052` - Change `hal_service_port` in config, or kill conflicting process
+
+### Debug Logging Enable verbose logging:
 ```bash
 SPDLOG_LEVEL=debug/usr/bin/sequoia-client --config/etc/sequoia/client.conf
 ``` Or modify `main.cpp` and rebuild:
 ```cpp
 spdlog::set_level(spdlog::level::debug);// Change from ::info
-``` --- ### Getting Help - **Check logs**: `journalctl -u sequoia-client.service -n 200`
+```
+
+### Getting Help - **Check logs**: `journalctl -u sequoia-client.service -n 200`
 - **Inspect spool**: `sqlite3/var/lib/sequoia/spool/spool.db ".tables"`
 - **Test connectivity**: `grpcurl -plaintext <server_ip>:50051 list`
-- **GitHub Issues**: Report bugs with full logs and config (redact sensitive data) --- ## License [Specify license here — e.g., MIT, Apache 2.0, Proprietary] --- ## Contributing 1. Fork the repository
+- **GitHub Issues**: Report bugs with full logs and config (redact sensitive data)
+
+## License [Specify license here — e.g., MIT, Apache 2.0, Proprietary]
+
+## Contributing 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-adapter`)
 3. Commit changes (`git commit -am 'Add XYZ adapter'`)
 4. Push to branch (`git push origin feature/my-adapter`)
@@ -264,7 +321,10 @@ spdlog::set_level(spdlog::level::debug);// Change from ::info
 - Add tests for new functionality
 - Update documentation
 - Follow existing code style
-- Ensure CI passes --- ## Acknowledgments - Built for IV&V hardware validation on Intel x86 RT 5 and Intel x86 RT 5 platforms
+- Ensure CI passes
+
+## Acknowledgments - Built for IV&V hardware validation on Intel x86 RT 5 and Intel x86 RT 5 platforms
 - Uses gRPC for efficient client-server communication
 - Protocol Buffers for portable serialization
 - SQLite3 for durable local storage --- **Questions?** Contact the Sequoia development team or file an issue on GitHub.
+````
