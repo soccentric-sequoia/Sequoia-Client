@@ -1,4 +1,41 @@
-# Sequoia-Client > **gRPC-based daemon for IV&V (Independent Verification & Validation) hardware testing on embedded Linux platforms** Sequoia-Client is a C++17 daemon that orchestrates hardware validation tests, collects results, and streams them to an Sequoia-Server instance. It manages test execution, durable result storage, log collection, and provides gRPC endpoints for both server communication and SDK integration. --- ## Table of Contents - [Overview](#overview)
+# Sequoia-Client
+
+## Project Summary
+
+Sequoia-Client is the C++17 embedded daemon that executes Sequoia hardware validation work and connects a target board to Sequoia-Server. The repository contains the application wiring, configuration, stream, spool, run, registry, HAL bridge, logging, diagnostics, and service-installation surfaces described by its CMake and Make build files. The client loads a TOML configuration, starts the application, and uses the sibling Sequoia-HAL contracts and libraries to invoke module adapters. Results are converted to protobuf messages, sequenced and timestamped, then sent over the server-facing gRPC stream. A SQLite spool provides durable buffering when the network is unavailable; the documented janitor and log-collection paths cover retention and forwarding concerns. The inbound HalService endpoint is the integration point used by the Python SDK and end-to-end tooling. The repository also includes ARM64 Docker/cross-build helpers, a sample configuration, systemd assets, and Doxygen setup.
+
+The existing documentation identifies 35 active hardware-module adapters and additional phase-three modules. That inventory is useful but should be read alongside the source and tests: adapter availability is not equivalent to successful hardware execution on this host. The checked-in unit-test surface explicitly covers result serialization and run orchestration; broader behavior depends on the HAL sibling and target hardware. Native build and CTest commands are documented below. Manual deployment, gRPC interoperability, TLS, spool recovery, and physical peripherals remain review activities and are intentionally not marked as verified here.
+
+## Feature Inventory
+
+| # | Name / Description | Implemented? | Test Coverage? | Manual Test |
+|---:|---|---|---|---|
+| 1 | C++17 daemon entry point and application wiring | Implemented | Unit/build coverage present | [ ] Manual verification required |
+| 2 | TOML client configuration and sample deployment config | Implemented | Partial; configuration paths are exercised indirectly | [ ] Manual verification required |
+| 3 | Module registry and adapter dispatch for hardware tests | Implemented | Partial; registry behavior documented, target execution not proven here | [ ] Manual verification required |
+| 4 | HAL result to protobuf serialization | Implemented | Covered by `tests/test_result_serializer.cc` | [ ] Manual verification required |
+| 5 | Run orchestration, sequencing, timestamps, and batching | Implemented | Covered by `tests/test_run_orchestrator.cc` | [ ] Manual verification required |
+| 6 | SQLite durable result spool and replay path | Implemented | Unknown from the checked-in focused tests | [ ] Manual verification required |
+| 7 | Bidirectional gRPC stream to Sequoia-Server | Implemented | Unknown; requires integration endpoint | [ ] Manual verification required |
+| 8 | HalService gRPC endpoint for SDK callers | Implemented | Unknown; requires client/server integration | [ ] Manual verification required |
+| 9 | Log collection, janitor cleanup, and diagnostic socket surfaces | Implemented | Unknown from focused tests | [ ] Manual verification required |
+| 10 | Systemd installation and runtime service assets | Implemented | Not found; packaging/runtime validation required | [ ] Manual verification required |
+| 11 | Docker-based ARM64 cross-build helpers | Implemented | Not found; requires Docker/QEMU and target image | [ ] Manual verification required |
+| 12 | Phase-three module adapters listed in existing docs | Planned | No tests found for planned modules | [ ] Manual verification required |
+
+## Build and Test
+
+```bash
+make configure
+make build
+cd build/native && ctest --output-on-failure
+```
+
+The focused tests are `tests/test_result_serializer.cc` and
+`tests/test_run_orchestrator.cc`; inspect `tests/CMakeLists.txt` for the exact
+registered targets. `make lint` and the Docker targets are available for static
+analysis and cross-build validation. Hardware behavior, server connectivity,
+and deployment must be tested on an appropriately provisioned target.
 - [Architecture](#architecture)
 - [System Requirements](#system-requirements)
 - [Dependencies](#dependencies)
