@@ -42,9 +42,8 @@ remain review activities and are intentionally not marked as verified here.
 ## Build and Test
 
 ```bash
-make configure
-make build
-cd build/native && ctest --output-on-failure
+make build          # Docker cross-build (ARM64) — the default and only build path
+make test           # ctest inside Docker
 ```
 
 The focused tests are `tests/test_result_serializer.cc` and `tests/test_run_orchestrator.cc`;
@@ -135,26 +134,26 @@ Sequoia-HAL (gRPC Stream) (Hardware Abstraction)
 ### Native Build **Using Makefile** (recommended):
 ```bash
 cd ~/workspace/Sequoia/Sequoia-Client
-make configure # Run CMake
+make docker-configure # Configure inside Docker
 make build # Compile with Ninja
 ``` **Using CMake directly**:
 ```bash
 cd ~/workspace/Sequoia/Sequoia-Client
-mkdir -p build/native
-cd build/native
+mkdir -p build/cross
+cd build/cross
 cmake ../.. -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel $(nproc)
 ``` **Output**:
-- Binary: `build/native/bin/sequoia-client`
-- Tests: `build/native/bin/test_result_serializer`, `build/native/bin/test_run_orchestrator`
+- Binary: `build/cross/bin/sequoia-client`
+- Tests: `build/cross/bin/test_result_serializer`, `build/cross/bin/test_run_orchestrator`
 
 ### Docker Build (Cross-compilation) For cross-compiling from x86_64 to ARM64 (Intel x86 RT 5): 1. **Build Docker image**: ```bash cd ~/workspace/Sequoia/Sequoia-Client/docker make build # or: docker buildx build --platform linux/arm64 --load -t sequoia . ``` 2. **Enter build container**: ```bash make run # Interactive shell in ARM64 container ``` 3. **Build inside container**: ```bash # Inside container: cd/workspace/Sequoia-Client make docker-configure make docker-build ``` 4. **Extract binaries**: ```bash # On host: cd ~/workspace/Sequoia/Sequoia-Client docker run --rm -v $(pwd):/host sequoia \ cp -r/workspace/Sequoia-Client/build/cross/bin/host/build/cross/ ```
 
-## Installation ### Manual Installation 1. **Copy binary**: ```bash sudo install -m 0755 build/native/bin/sequoia-client/usr/bin/sequoia-client ``` 2. **Create configuration directory**: ```bash sudo mkdir -p/etc/sequoia sudo cp conf/client.conf.sample/etc/sequoia/client.conf sudo chown root:root/etc/sequoia/client.conf sudo chmod 0644/etc/sequoia/client.conf ``` 3. **Create spool directory**: ```bash sudo mkdir -p/var/lib/sequoia/spool sudo chown sequoia:sequoia/var/lib/sequoia/spool # See user setup below ``` 4. **Create sequoia user** (for systemd service): ```bash sudo useradd -r -s/usr/sbin/nologin -d/var/lib/sequoia sequoia sudo chown -R sequoia:sequoia/var/lib/sequoia ``` 5. **Install systemd service**: ```bash sudo cp systemd/sequoia-client.service/etc/systemd/system/ sudo systemctl daemon-reload ```
+## Installation ### Manual Installation 1. **Copy binary**: ```bash sudo install -m 0755 build/cross/bin/sequoia-client/usr/bin/sequoia-client ``` 2. **Create configuration directory**: ```bash sudo mkdir -p/etc/sequoia sudo cp conf/client.conf.sample/etc/sequoia/client.conf sudo chown root:root/etc/sequoia/client.conf sudo chmod 0644/etc/sequoia/client.conf ``` 3. **Create spool directory**: ```bash sudo mkdir -p/var/lib/sequoia/spool sudo chown sequoia:sequoia/var/lib/sequoia/spool # See user setup below ``` 4. **Create sequoia user** (for systemd service): ```bash sudo useradd -r -s/usr/sbin/nologin -d/var/lib/sequoia sequoia sudo chown -R sequoia:sequoia/var/lib/sequoia ``` 5. **Install systemd service**: ```bash sudo cp systemd/sequoia-client.service/etc/systemd/system/ sudo systemctl daemon-reload ```
 
 ### CMake Install Alternatively, use the CMake install target:
 ```bash
-cd build/native
+cd build/cross
 sudo cmake --install .
 ``` This installs:
 - Binary → `/usr/bin/sequoia-client`
@@ -224,7 +223,7 @@ sudo systemctl restart sequoia-client.service
 ```
 
 ## Testing ### Run Unit Tests ```bash
-cd build/native
+cd build/cross
 ctest --output-on-failure
 ``` Or run individual test binaries:
 ```bash
@@ -294,7 +293,7 @@ Sequoia-Client/
 ## Development ### Coding Standards - **Language**: C++17
 - **Style**: Follow existing conventions (see `.clang-format` if present)
 - **Logging**: Use `spdlog` macros (`spdlog::info`, `spdlog::error`, etc.)
-- **Error Handling**: Return `bool` or `Status` from init methods; log errors before returning ### Adding a New Module Adapter 1. **Create adapter files**: ```bash touch src/registry/adapters/my_module_adapter.h touch src/registry/adapters/my_module_adapter.cc ``` 2. **Implement `AdapterBase` interface**: ```cpp// my_module_adapter.h #pragma once #include "registry/AdapterBase.h" class MyModuleAdapter : public AdapterBase { public: std::string module_id const override { return "my_module"; } hal::TestResult run_test(const std::string& test_id, const TestParameters& params) override; }; ``` 3. **Register in `app.cpp`**: ```cpp #include "registry/adapters/my_module_adapter.h"// ... reg->register_adapter(std::make_unique<MyModuleAdapter>); ``` 4. **Build and test**: ```bash make build ./build/native/bin/sequoia-client --config/etc/sequoia/client.conf ```
+- **Error Handling**: Return `bool` or `Status` from init methods; log errors before returning ### Adding a New Module Adapter 1. **Create adapter files**: ```bash touch src/registry/adapters/my_module_adapter.h touch src/registry/adapters/my_module_adapter.cc ``` 2. **Implement `AdapterBase` interface**: ```cpp// my_module_adapter.h #pragma once #include "registry/AdapterBase.h" class MyModuleAdapter : public AdapterBase { public: std::string module_id const override { return "my_module"; } hal::TestResult run_test(const std::string& test_id, const TestParameters& params) override; }; ``` 3. **Register in `app.cpp`**: ```cpp #include "registry/adapters/my_module_adapter.h"// ... reg->register_adapter(std::make_unique<MyModuleAdapter>); ``` 4. **Build and test**: ```bash make build ./build/cross/bin/sequoia-client --config/etc/sequoia/client.conf ```
 
 ## Troubleshooting ### Common Issues #### 1. **gRPC connection fails** ``` [ERROR] StreamClient failed to connect to 192.168.1.100:50051 ``` **Solution**: - Verify `server_address` in `/etc/sequoia/client.conf` - Check network connectivity: `ping 192.168.1.100` - Ensure Sequoia-Server is running and reachable - Check firewall rules: `sudo ufw status` #### 2. **Missing `grpc_cpp_plugin`** ``` CMake Error: grpc_cpp_plugin not found ``` **Solution**: ```bash sudo apt-get install -y protobuf-compiler-grpc # OR build from source (see Dockerfile) ``` #### 3. **Spool database locked** ``` [ERROR] Spool::init failed: database is locked ``` **Solution**: - Stop conflicting instance: `sudo systemctl stop sequoia-client` - Check for stale processes: `ps aux | grep sequoia-client` - Remove lock if safe: `rm/var/lib/sequoia/spool/spool.db-shm` #### 4. **Permission denied on `/var/lib/sequoia`** ``` [ERROR] Failed to create spool.db: Permission denied ``` **Solution**: ```bash sudo chown -R sequoia:sequoia/var/lib/sequoia sudo chmod 0755/var/lib/sequoia ``` #### 5. **HAL library not found** ``` CMake Error: Could not find Sequoia-HAL ``` **Solution**: - Ensure `Sequoia-HAL` is in sibling directory: ```bash ls -ld ../Sequoia-HAL # Should exist ``` - Clone HAL repository: `git clone <hal-repo> ../Sequoia-HAL` #### 6. **Port 50052 already in use** ``` [ERROR] HalService failed to bind: Address already in use ``` **Solution**: - Check what's using the port: `sudo lsof -i :50052` - Change `hal_service_port` in config, or kill conflicting process
 
