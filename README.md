@@ -310,7 +310,9 @@ spdlog::set_level(spdlog::level::debug);// Change from ::info
 - **Test connectivity**: `grpcurl -plaintext <server_ip>:50051 list`
 - **GitHub Issues**: Report bugs with full logs and config (redact sensitive data)
 
-## License [Specify license here — e.g., MIT, Apache 2.0, Proprietary]
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ## Contributing 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-adapter`)
