@@ -18,7 +18,8 @@ Sequoia-HAL repository.
   `sequoia` and the recipes use ARM64 emulation. `make docker-install` may use
   `sudo apt` when Docker is absent.
 - Deployment: `sshpass`, SSH/SCP access to the target, and credentials. The
-  defaults are `nvidia`/`nvidia`; override with `USER`, `PASS`, `IP_A`, and
+  default user is `root` with no password (key-based SSH); override with
+  `HAL_SSH_USER`, `HAL_SSH_PASS`, `IP_A`, and
   `IP_B` or use the configured lab values. **Credential/device required.**
 
 ## 2. Setup
@@ -62,8 +63,8 @@ cross build places libraries and executables under `build/cross/lib/` and
 ## 6. Deploy, install, and run
 
 ```sh
-make deploy-a IP_A=192.168.1.3 USER=nvidia PASS='...'  # credential/device required
-make deploy-b IP_B=192.168.1.13 USER=nvidia PASS='...' # credential/device required
+make deploy-a IP_A=192.168.1.3 HAL_SSH_USER=root HAL_SSH_PASS='...'  # credential/device required
+make deploy-b IP_B=192.168.1.13 HAL_SSH_USER=root HAL_SSH_PASS='...' # credential/device required
 make run-a [APP] [ARGS...]                             # deploy then remote run
 make run-b [APP] [ARGS...]                             # deploy then remote run
 make list                                               # list native/cross apps
